@@ -1,0 +1,17 @@
+# Données d'entreprises (CSV leadfinder, base SQLite, exports) : JAMAIS dans git
+data/*
+!data/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.csv
+*.xlsx
+*.parquet
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+__pycache__/
+*.pyc
+.venv/

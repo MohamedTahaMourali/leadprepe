@@ -1,0 +1,46 @@
+services:
+
+  dashboard:
+    build: .
+    container_name: leadprep-dashboard
+    restart: unless-stopped
+    environment:
+      LEADPREP_DATA: /app/data
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
+    volumes:
+      - ./data:/app/data            # base SQLite + CSV + exports : restent sur le serveur, hors git
+    # Streamlit n'a pas d'authentification fiable à lui seul : accessible depuis la machine uniquement,
+    # publié sur Internet seulement via le proxy Caddy (profil "proxy") ou un autre reverse proxy HTTPS.
+    ports:
+      - "127.0.0.1:8501:8501"
+
+  # Ingestion + exports : docker compose run --rm ingest
+  ingest:
+    build: .
+    profiles: ["tools"]
+    environment:
+      LEADPREP_DATA: /app/data
+    volumes:
+      - ./data:/app/data
+    command: ["python", "-m", "leadprep", "run"]
+
+  # HTTPS automatique + authentification : docker compose --profile proxy up -d
+  caddy:
+    image: caddy:2
+    profiles: ["proxy"]
+    restart: unless-stopped
+    depends_on:
+      - dashboard
+    environment:
+      DOMAIN: ${DOMAIN:?Définissez DOMAIN dans .env}
+      BASIC_USER: ${BASIC_USER:?Définissez BASIC_USER dans .env}
+      BASIC_HASH: ${BASIC_HASH:?Définissez BASIC_HASH dans .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+volumes:
+  caddy_data:

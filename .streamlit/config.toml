@@ -1,0 +1,7 @@
+[server]
+headless = true
+fileWatcherType = "none"
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
